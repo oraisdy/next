@@ -290,9 +290,11 @@ export default function expanded(BaseComponent, stickyLock) {
                 ...others
             } = this.props;
 
-            if (expandedRowRender && !components.Row) {
+            if (expandedRowRender) {
                 components = { ...components };
-                components.Row = RowComponent;
+                if (!components.Row) {
+                    components.Row = RowComponent;
+                }
                 dataSource = this.normalizeDataSource(dataSource);
                 entireDataSource = this.normalizeDataSource(entireDataSource);
             }
