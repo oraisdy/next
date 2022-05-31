@@ -1,6 +1,6 @@
 {
-  "name": "@alifd/next",
-  "version": "1.25.39",
+  "name": "@ali/cg-next-fix",
+  "version": "0.0.1",
   "description": "A configurable component library for web built on React.",
   "keywords": [
     "fusion",
@@ -251,6 +251,6 @@
     "react-dom": ">=16.0.0"
   },
   "publishConfig": {
-    "access": "public"
+    "registry": "https://registry.npm.alibaba-inc.com"
   }
 }
