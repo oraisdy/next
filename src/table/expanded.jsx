@@ -207,6 +207,37 @@ export default function expanded(BaseComponent, stickyLock) {
             );
         };
 
+        renderExpandedHeader = () => {
+            const { prefix, locale, dataSource } = this.props;
+
+            const { openRowKeys } = this.state,
+                hasExpanded = openRowKeys.length === dataSource.length,
+                switchNode = hasExpanded ? (
+                    <Icon type="minus" size="xs" className={`${prefix}table-expand-unfold`} />
+                ) : (
+                    <Icon type="add" size="xs" className={`${prefix}table-expand-fold`} />
+                );
+            const attrs = {};
+            const cls = classnames({
+                [`${prefix}table-expanded-ctrl`]: true,
+            });
+
+            attrs.onClick = this.expandAll.bind(this, !hasExpanded);
+            return (
+                <span
+                    {...attrs}
+                    role="button"
+                    tabIndex="0"
+                    onKeyDown={this.expandAll.bind(this, !hasExpanded)}
+                    aria-label={hasExpanded ? locale.expanded : locale.folded}
+                    aria-expanded={hasExpanded}
+                    className={cls}
+                >
+                    {switchNode}
+                </span>
+            );
+        };
+
         onExpandedClick(value, record, i, e) {
             const openRowKeys = [...this.state.openRowKeys],
                 { primaryKey } = this.props,
@@ -226,13 +257,24 @@ export default function expanded(BaseComponent, stickyLock) {
             e.stopPropagation();
         }
 
+        expandAll(checked) {
+            const { primaryKey, dataSource } = this.props;
+            const openRowKeys = checked ? dataSource.map(d => d[primaryKey]) : [];
+            if (!('openRowKeys' in this.props)) {
+                this.setState({
+                    openRowKeys: openRowKeys,
+                });
+            }
+            this.props.onRowOpen(openRowKeys);
+        }
+
         addExpandCtrl = columns => {
             const { prefix, size } = this.props;
 
             if (!columns.find(record => record.key === 'expanded')) {
                 columns.unshift({
                     key: 'expanded',
-                    title: '',
+                    title: this.renderExpandedHeader.bind(this),
                     cell: this.renderExpandedCell.bind(this),
                     width: size === 'small' ? 34 : 50,
                     className: `${prefix}table-expanded ${prefix}table-prerow`,
@@ -250,7 +292,7 @@ export default function expanded(BaseComponent, stickyLock) {
             );
             toArrayChildren.unshift(
                 <Col
-                    title=""
+                    title={this.renderExpandedHeader.bind(this)}
                     key="expanded"
                     cell={this.renderExpandedCell.bind(this)}
                     width={size === 'small' ? 34 : 50}
