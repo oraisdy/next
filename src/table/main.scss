@@ -360,6 +360,7 @@
 #{$table-prefix}-body {
     font-size: $table-body-font-size;
     position: relative;
+    scroll-behavior: smooth;
 }
 
 #{$table-prefix}-fixed {

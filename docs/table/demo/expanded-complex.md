@@ -151,6 +151,7 @@ class App extends React.Component {
                     hasExpandedRowCtrl={this.state.hasExpandedRowCtrl}
                     onRowOpen={this.onRowOpen.bind(this)}
                     rowProps={this.rowProps.bind(this)}
+                    useVirtual
                 >
                     <Table.Column title="Id" dataIndex="id" sortable/>
                     <Table.Column title="Title" dataIndex="title" cell={renderTitle}/>
