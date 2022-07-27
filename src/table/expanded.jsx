@@ -265,7 +265,7 @@ export default function expanded(BaseComponent, stickyLock) {
                     openRowKeys: openRowKeys,
                 });
             }
-            this.props.onRowOpen(openRowKeys);
+            this.props.onRowOpen(openRowKeys, undefined, checked, undefined);
         }
 
         addExpandCtrl = columns => {

@@ -21,6 +21,7 @@ export default function virtual(BaseComponent) {
              * 设置行高
              */
             rowHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.func]),
+            threshold: PropTypes.number,
             maxBodyHeight: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
             primaryKey: PropTypes.oneOfType([PropTypes.symbol, PropTypes.string]),
             dataSource: PropTypes.array,
@@ -38,6 +39,7 @@ export default function virtual(BaseComponent) {
             maxBodyHeight: 200,
             components: {},
             prefix: 'next-',
+            threshold: THRESHOLD,
             onBodyScroll: noop,
         };
 
@@ -170,7 +172,7 @@ export default function virtual(BaseComponent) {
                 return 0;
             }
 
-            const start = Math.max(this.start - THRESHOLD, 0);
+            const start = Math.max(this.start - this.props.threshold, 0);
 
             if (typeof rowHeight === 'function') {
                 return start >= 0 ? (virtualPosMetadata[start] || {}).offset : 0;
@@ -204,7 +206,7 @@ export default function virtual(BaseComponent) {
                     visibleCount = parseInt(dom.getPixels(height) / rowHeight, 10);
                 }
 
-                end = Math.min(+start + 1 + visibleCount + 10, len);
+                end = Math.min(+start + 1 + visibleCount + this.props.threshold, len);
             }
             this.end = end;
             this.visibleCount = visibleCount;
@@ -266,8 +268,11 @@ export default function virtual(BaseComponent) {
                     scrollToRow: start,
                 });
             }
-            this.props.onBodyScroll(start);
-            this.lastScrollTop = scrollTop;
+            if (this.start !== start) {
+                this.start = start;
+                this.props.onBodyScroll(start);
+                this.lastScrollTop = scrollTop;
+            }
         };
 
         computeScrollToRow(offset) {
@@ -278,7 +283,6 @@ export default function virtual(BaseComponent) {
             } else {
                 start = parseInt(offset / rowHeight);
             }
-            this.start = start;
             return start;
         }
 
@@ -313,6 +317,7 @@ export default function virtual(BaseComponent) {
                 rowHeight,
                 scrollToRow,
                 onBodyScroll,
+                threshold,
                 ...others
             } = this.props;
 
@@ -328,7 +333,7 @@ export default function virtual(BaseComponent) {
                 dataSource.forEach((current, index, record) => {
                     if (!current.__hidden) {
                         count += 1;
-                        if (count >= Math.max(start - THRESHOLD, 0) && count < end) {
+                        if (count >= Math.max(start - threshold, 0) && count < end) {
                             newDataSource.push(current);
                         }
                     }

@@ -16,8 +16,9 @@ Use `useVirtual` to enable virtual scrolling and `scrollToRow` scrolls to the sp
 
 ````jsx
 import { Table } from '@alifd/next';
+import {debounce, cloneDeep} from 'lodash'
 
-const dataSource = (j) => {
+const dataSource = (j, k = 2000) => {
   const result = [];
   for (let i = 0; i < j; i++) {
     result.push({
@@ -25,7 +26,7 @@ const dataSource = (j) => {
         name: `Quotation for 1PCS Nano ${3 + i}.0 controller compatible`,
       },
       id: `100306660940${i}`,
-      time: 2000 + i,
+      time: k + i,
       index: i,
     });
   }
@@ -35,18 +36,24 @@ const render = (value, index, record) => {
   return <a>Remove({record.id})</a>;
 };
 const rowHeightFunc = (_, i) => {
-  return i === 0 ? 161 : 41;
+    console.log(_)
+  return 161;
 };
+class Comp extends React.Component {
+    render() {
+        return <div style={{ height: 20 + 100 * Math.random() }}>123</div>
+    }
+}
 
 const expandedRowRender = () => {
-  return <div style={{ height: 120 }}>123</div>;
+  return <Comp/>;
 };
 
 class App extends React.Component {
   state = {
     scrollToRow: 20,
     data: dataSource(200),
-    openRowKeys: [`100306660940${0}`],
+    openRowKeys: new Array(200).fill(0).map((_, i) => `100306660940${i}`),
     bodyHeight: 0,
   };
   onBodyScroll = (start) => {
@@ -56,9 +63,10 @@ class App extends React.Component {
   };
 
   componentDidMount() {
-    setTimeout(() => {
-      this.setState({ scrollToRow: 50 });
-    }, 3000);
+    // setTimeout(() => {
+    // //   this.setState({ scrollToRow: 50 });
+    // this.setState({data: dataSource(200, 99999)});
+    // }, 3000);
   }
   render() {
     return (
@@ -67,11 +75,13 @@ class App extends React.Component {
         maxBodyHeight={400}
         useVirtual
         stickyHeader
-        scrollToRow={this.state.scrollToRow}
-        onBodyScroll={this.onBodyScroll}
+        // threshold={3}
+        // scrollToRow={this.state.scrollToRow}
+        onRowOpen={(r) => {this.setState({openRowKeys: r})}}
+        // onBodyScroll={debounce(this.onBodyScroll, 200)}
         openRowKeys={this.state.openRowKeys}
         expandedRowRender={expandedRowRender}
-        rowHeight={rowHeightFunc}
+        // rowHeight={rowHeightFunc}
       >
         <Table.Column title="Id1" dataIndex="id" width={100} />
         <Table.Column title="Index" dataIndex="index" width={200} />
