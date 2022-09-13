@@ -16,7 +16,7 @@ Use `useVirtual` to enable virtual scrolling and `scrollToRow` scrolls to the sp
 
 ````jsx
 import { Table } from '@alifd/next';
-import {debounce, cloneDeep} from 'lodash'
+import {debounce, cloneDeep} from 'lodash';
 
 const dataSource = (j, k = 2000) => {
   const result = [];
@@ -36,17 +36,16 @@ const render = (value, index, record) => {
   return <a>Remove({record.id})</a>;
 };
 const rowHeightFunc = (_, i) => {
-    console.log(_)
-  return 161;
+  return 100 + i * 10 + 41;
 };
 class Comp extends React.Component {
     render() {
-        return <div style={{ height: 20 + 100 * Math.random() }}>123</div>
+        return <div style={{ height: 100 + this.props.index * 10, overflow: "hidden" }}><Table columns={[{dataKey:1, title: "1"}]}/></div>
     }
 }
 
-const expandedRowRender = () => {
-  return <Comp/>;
+const expandedRowRender = (_, i) => {
+  return <Comp index={i} />;
 };
 
 class App extends React.Component {
@@ -75,13 +74,13 @@ class App extends React.Component {
         maxBodyHeight={400}
         useVirtual
         stickyHeader
-        // threshold={3}
-        // scrollToRow={this.state.scrollToRow}
+        threshold={3}
+        scrollToRow={this.state.scrollToRow}
         onRowOpen={(r) => {this.setState({openRowKeys: r})}}
-        // onBodyScroll={debounce(this.onBodyScroll, 200)}
+        onBodyScroll={debounce(this.onBodyScroll, 200)}
         openRowKeys={this.state.openRowKeys}
         expandedRowRender={expandedRowRender}
-        // rowHeight={rowHeightFunc}
+        rowHeight={rowHeightFunc}
       >
         <Table.Column title="Id1" dataIndex="id" width={100} />
         <Table.Column title="Index" dataIndex="index" width={200} />

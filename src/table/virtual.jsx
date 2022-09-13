@@ -70,12 +70,11 @@ export default function virtual(BaseComponent) {
             const hasVirtualData = useVirtual && dataSource && dataSource.length > 0;
 
             this.state = {
-                rowHeight: this.props.rowHeight,
                 scrollToRow: this.props.scrollToRow,
                 height: this.props.maxBodyHeight === 10000 ? window.innerHeight : this.props.maxBodyHeight,
                 hasVirtualData,
-                virtualPosMetadata: [],
             };
+            this.virtualPosMetadata = [];
         }
 
         getChildContext() {
@@ -106,12 +105,6 @@ export default function virtual(BaseComponent) {
                 state.hasVirtualData = nextProps.useVirtual && nextProps.dataSource && nextProps.dataSource.length > 0;
                 state.dataSource = nextProps.dataSource;
                 state.useVirtual = nextProps.useVirtual;
-                if (state.hasVirtualData && typeof nextProps.rowHeight === 'function') {
-                    state.virtualPosMetadata = VirtualTable.computeVirtualPosMetadata(
-                        nextProps.dataSource,
-                        nextProps.rowHeight
-                    );
-                }
             }
 
             return state;
@@ -124,36 +117,21 @@ export default function virtual(BaseComponent) {
 
             this.adjustScrollTop();
             this.adjustSize();
-            this.reComputeSize();
         }
 
         componentDidUpdate() {
             this.adjustScrollTop();
             this.adjustSize();
-            this.reComputeSize();
-        }
-
-        reComputeSize() {
-            const { rowHeight, hasVirtualData } = this.state;
-            if (!rowHeight && hasVirtualData) {
-                const row = this.getRowNode();
-                const rowClientHeight = row && row.clientHeight;
-                if (rowClientHeight !== this.state.rowHeight) {
-                    this.setState({
-                        rowHeight: rowClientHeight,
-                    });
-                }
-            }
         }
 
         computeBodyHeight() {
-            const { rowHeight, virtualPosMetadata } = this.state;
+            const { rowHeight } = this.props;
             const { dataSource } = this.props;
             if (!rowHeight) {
                 return 0;
             }
             if (typeof rowHeight === 'function') {
-                const lastRow = virtualPosMetadata[virtualPosMetadata.length - 1];
+                const lastRow = this.virtualPosMetadata[this.virtualPosMetadata.length - 1];
                 return lastRow ? lastRow.height + lastRow.offset : 0;
             }
             let count = 0;
@@ -166,7 +144,7 @@ export default function virtual(BaseComponent) {
         }
 
         computeInnerTop() {
-            const { rowHeight, virtualPosMetadata } = this.state;
+            const { rowHeight } = this.props;
 
             if (!rowHeight) {
                 return 0;
@@ -175,14 +153,14 @@ export default function virtual(BaseComponent) {
             const start = Math.max(this.start - this.props.threshold, 0);
 
             if (typeof rowHeight === 'function') {
-                return start >= 0 ? (virtualPosMetadata[start] || {}).offset : 0;
+                return start >= 0 ? (this.virtualPosMetadata[start] || {}).offset : 0;
             }
 
             return start * rowHeight;
         }
 
         getVisibleRange(ExpectStart) {
-            const { height, rowHeight } = this.state;
+            const { height, rowHeight } = this.props;
             const len = this.props.dataSource.length;
 
             let end,
@@ -199,7 +177,7 @@ export default function virtual(BaseComponent) {
                     visibleCount = 0;
                     let visibleHeight = dom.getPixels(height);
                     for (let i = start; i < len; i++, visibleCount++) {
-                        visibleHeight -= this.state.virtualPosMetadata[i].height;
+                        visibleHeight -= this.virtualPosMetadata[i].height;
                         if (visibleHeight <= 0) break;
                     }
                 } else {
@@ -218,9 +196,9 @@ export default function virtual(BaseComponent) {
 
         adjustScrollTop() {
             if (this.state.hasVirtualData && this.bodyNode) {
-                if (typeof this.state.rowHeight === 'function') {
+                if (typeof this.props.rowHeight === 'function') {
                     if (this.state.scrollToRow !== this.start) {
-                        const currentRow = this.state.virtualPosMetadata[this.state.scrollToRow];
+                        const currentRow = this.virtualPosMetadata[this.state.scrollToRow];
                         if (currentRow) {
                             this.bodyNode.scrollTop = currentRow.offset;
                         }
@@ -228,7 +206,7 @@ export default function virtual(BaseComponent) {
                     return;
                 }
                 this.bodyNode.scrollTop =
-                    (this.lastScrollTop % this.state.rowHeight) + this.state.rowHeight * this.state.scrollToRow;
+                    (this.lastScrollTop % this.props.rowHeight) + this.props.rowHeight * this.state.scrollToRow;
             }
         }
 
@@ -263,7 +241,7 @@ export default function virtual(BaseComponent) {
                 return;
             }
             const start = this.computeScrollToRow(scrollTop);
-            if (!('scrollToRow' in this.props)) {
+            if (!('scrollToRow' in this.props) && start !== this.state.scrollToRow) {
                 this.setState({
                     scrollToRow: start,
                 });
@@ -276,10 +254,10 @@ export default function virtual(BaseComponent) {
         };
 
         computeScrollToRow(offset) {
-            const { rowHeight, virtualPosMetadata } = this.state;
+            const { rowHeight } = this.props;
             let start = 0;
             if (typeof rowHeight === 'function') {
-                start = findLastIndex(virtualPosMetadata, row => row.offset <= offset);
+                start = findLastIndex(this.virtualPosMetadata, row => row.offset <= offset);
             } else {
                 start = parseInt(offset / rowHeight);
             }
@@ -320,6 +298,10 @@ export default function virtual(BaseComponent) {
                 threshold,
                 ...others
             } = this.props;
+
+            if (this.state.hasVirtualData && typeof rowHeight === 'function') {
+                this.virtualPosMetadata = VirtualTable.computeVirtualPosMetadata(this.props.dataSource, rowHeight);
+            }
 
             const entireDataSource = dataSource;
             let newDataSource = dataSource;
